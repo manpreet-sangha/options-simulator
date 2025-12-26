@@ -8,19 +8,52 @@ This comprehensive educational tool allows learners to explore **call and put op
 
 **[Try the Options Simulator →](https://manpreet-sangha.github.io/options-simulator/)**
 
+| Page | Description |
+|------|-------------|
+| [Basic Options](https://manpreet-sangha.github.io/options-simulator/) | Long/Short Call & Put with educational descriptions |
+| [Bull Spread](https://manpreet-sangha.github.io/options-simulator/strategies.html) | Bull Call Spread strategy simulator |
+| [Straddles](https://manpreet-sangha.github.io/options-simulator/straddle.html) | Long & Short Straddle strategies |
+| [Futures Arbitrage](https://manpreet-sangha.github.io/options-simulator/arbitrage.html) | Cash-and-carry arbitrage animation |
+
 ## Features
 
 ### Core Functionality
 - **Four Position Types**: Long Call, Long Put, Short Call, and Short Put
 - **Interactive Visualization**: Real-time payoff diagrams that update as you adjust parameters
-- **Educational Formulas**: Display of intrinsic value calculations with proper mathematical notation
+- **Educational Descriptions**: Each option type includes detailed explanations of:
+  - What the strategy is and how it works
+  - Maximum profit and loss potential
+  - Breakeven points with formulas
+  - When to use the strategy in real markets
+  - Risk/reward profile comparison
+- **Short Call vs Long Put**: Clear explanation of the difference between selling calls and buying puts
 - **ITM/OTM/ATM Indicators**: Dynamic labels showing option moneyness status
 - **Time Value Analysis**: Breakdown of premium components for better understanding
 
-### Options Strategies (NEW!)
+### Options Strategies
 - **Bull Call Spread**: Learn vertical spread strategies with interactive diagrams
+- **Long Straddle**: Volatility bet - profit from large moves in either direction
+  - Buy Call + Buy Put at same strike
+  - Max loss = total premium paid
+  - Profits when stock moves significantly (either direction)
+  - Use before earnings, FDA decisions, major events
+- **Short Straddle**: Income strategy - profit when stock stays near strike price
+  - Sell Call + Sell Put at same strike
+  - Max profit = total premium received
+  - ⚠️ Unlimited risk if stock moves significantly
+  - Includes Nick Leeson/Barings Bank cautionary tale
 - **Strategy Comparison**: See how combining options creates different risk/reward profiles
 - **Educational Breakdowns**: Component-by-component analysis of multi-leg strategies
+
+### Futures Arbitrage
+- **Cash-and-Carry Arbitrage**: Animated visualization of arbitrage with dividend-paying stocks
+- **Interactive Timeline**: Step-by-step cash flow animation showing:
+  - t=0: Buy stock, take two loans
+  - t: Receive dividend, repay Loan 1
+  - T: Deliver stock, receive futures price, repay Loan 2, keep profit
+- **Fair Price Calculator**: F = (S - PV(Dₜ)) × (1 + r(0,T))
+- **Arbitrage Detection**: Automatically identifies when Fq > Fair Price
+- **Loan Breakdown**: Visual representation of financing strategy
 
 ### Technical Features
 - Single-file HTML simulator (no build step) that runs in any modern browser
@@ -105,12 +138,13 @@ We welcome contributions that enhance the educational value of this simulator!
 
 ## Future Enhancement Ideas
 
-- **More Strategies**: Add straddles, strangles, iron condors, and butterflies
+- **More Strategies**: Add strangles, iron condors, butterflies, and calendar spreads
 - **Greeks Visualization**: Display Delta, Gamma, Theta, and Vega calculations
 - **Time Decay Animation**: Show how options lose time value as expiration approaches
 - **Preset Scenarios**: Add "Bullish", "Bearish", and "Volatile" market scenario buttons
 - **Export Functionality**: Download PNG images of charts for assignments and presentations
 - **Interactive Tooltips**: Hover over chart points to see exact payoff calculations
+- **Multiple Expirations**: Compare options with different time to expiration
 
 ## License
 

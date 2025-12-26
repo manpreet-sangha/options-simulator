@@ -1,0 +1,916 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Futures Arbitrage Strategy - Educational Simulator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            color: #e8e8e8;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            font-size: 2.2rem;
+            background: linear-gradient(90deg, #00d9ff, #00ff88);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #888;
+            font-size: 1.1rem;
+        }
+
+        .nav-button {
+            display: inline-block;
+            margin: 10px;
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .nav-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .formula-box {
+            background: rgba(0, 217, 255, 0.1);
+            border: 1px solid rgba(0, 217, 255, 0.3);
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .formula {
+            font-size: 1.4rem;
+            font-family: 'Times New Roman', serif;
+            color: #00d9ff;
+            margin: 10px 0;
+        }
+
+        .formula-label {
+            color: #888;
+            font-size: 0.9rem;
+            margin-bottom: 5px;
+        }
+
+        .controls-panel {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 25px;
+            margin: 20px 0;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .control-group label {
+            margin-bottom: 8px;
+            color: #aaa;
+            font-size: 0.9rem;
+        }
+
+        .control-group input {
+            padding: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            background: rgba(0, 0, 0, 0.3);
+            color: white;
+            font-size: 1rem;
+        }
+
+        .control-group input:focus {
+            outline: none;
+            border-color: #00d9ff;
+        }
+
+        .value-display {
+            color: #00ff88;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+
+        .timeline-container {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 12px;
+            padding: 30px;
+            margin: 20px 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .timeline {
+            position: relative;
+            height: 400px;
+        }
+
+        .timeline-line {
+            position: absolute;
+            top: 50%;
+            left: 5%;
+            right: 5%;
+            height: 4px;
+            background: linear-gradient(90deg, #00d9ff, #00ff88);
+            transform: translateY(-50%);
+            border-radius: 2px;
+        }
+
+        .timeline-point {
+            position: absolute;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            width: 30px;
+            height: 30px;
+            background: #00d9ff;
+            border-radius: 50%;
+            border: 3px solid white;
+            z-index: 10;
+            transition: all 0.5s ease;
+            cursor: pointer;
+        }
+
+        .timeline-point.active {
+            transform: translate(-50%, -50%) scale(1.3);
+            box-shadow: 0 0 20px rgba(0, 217, 255, 0.8);
+        }
+
+        .timeline-point.t0 { left: 10%; }
+        .timeline-point.t { left: 50%; background: #ffd700; }
+        .timeline-point.T { left: 90%; background: #00ff88; }
+
+        .timeline-label {
+            position: absolute;
+            top: calc(50% + 30px);
+            transform: translateX(-50%);
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+
+        .timeline-label.t0 { left: 10%; color: #00d9ff; }
+        .timeline-label.t { left: 50%; color: #ffd700; }
+        .timeline-label.T { left: 90%; color: #00ff88; }
+
+        .cash-flow-panel {
+            position: absolute;
+            width: 280px;
+            background: rgba(0, 0, 0, 0.8);
+            border-radius: 12px;
+            padding: 15px;
+            opacity: 0;
+            transition: all 0.5s ease;
+            pointer-events: none;
+            border: 2px solid;
+        }
+
+        .cash-flow-panel.visible {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .cash-flow-panel.t0-panel {
+            top: 5%;
+            left: 5%;
+            border-color: #00d9ff;
+        }
+
+        .cash-flow-panel.t-panel {
+            top: 5%;
+            left: 35%;
+            border-color: #ffd700;
+        }
+
+        .cash-flow-panel.T-panel {
+            top: 5%;
+            right: 5%;
+            border-color: #00ff88;
+        }
+
+        .cash-flow-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+        }
+
+        .cash-flow-item {
+            display: flex;
+            justify-content: space-between;
+            margin: 8px 0;
+            padding: 5px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .cash-flow-item.positive {
+            color: #00ff88;
+        }
+
+        .cash-flow-item.negative {
+            color: #ff6b6b;
+        }
+
+        .animation-controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .anim-btn {
+            padding: 12px 30px;
+            font-size: 1rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+        }
+
+        .play-btn {
+            background: linear-gradient(135deg, #00d9ff, #00ff88);
+            color: #1a1a2e;
+        }
+
+        .reset-btn {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .anim-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(0, 217, 255, 0.4);
+        }
+
+        .result-panel {
+            background: rgba(0, 255, 136, 0.1);
+            border: 2px solid #00ff88;
+            border-radius: 12px;
+            padding: 25px;
+            margin: 20px 0;
+            text-align: center;
+            opacity: 0;
+            transition: all 0.5s ease;
+        }
+
+        .result-panel.visible {
+            opacity: 1;
+        }
+
+        .profit-amount {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #00ff88;
+        }
+
+        .arbitrage-condition {
+            background: rgba(255, 107, 107, 0.1);
+            border: 1px solid rgba(255, 107, 107, 0.3);
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .arbitrage-condition.opportunity {
+            background: rgba(0, 255, 136, 0.1);
+            border-color: rgba(0, 255, 136, 0.5);
+        }
+
+        .condition-status {
+            font-size: 1.3rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .strategy-steps {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 25px;
+            margin: 20px 0;
+        }
+
+        .step {
+            display: flex;
+            align-items: flex-start;
+            margin: 15px 0;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            opacity: 0.5;
+            transition: all 0.5s ease;
+        }
+
+        .step.active {
+            opacity: 1;
+            border-left: 3px solid #00d9ff;
+        }
+
+        .step-number {
+            width: 30px;
+            height: 30px;
+            background: linear-gradient(135deg, #00d9ff, #00ff88);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: #1a1a2e;
+            margin-right: 15px;
+            flex-shrink: 0;
+        }
+
+        .step-content h3 {
+            margin-bottom: 5px;
+            color: #00d9ff;
+        }
+
+        .loan-visual {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+
+        .loan-box {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 12px;
+            padding: 20px;
+            min-width: 200px;
+            text-align: center;
+            border: 2px solid;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.5s ease;
+        }
+
+        .loan-box.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .loan-box.loan1 {
+            border-color: #ff6b6b;
+        }
+
+        .loan-box.loan2 {
+            border-color: #ffd700;
+        }
+
+        .loan-box.stock {
+            border-color: #00d9ff;
+        }
+
+        .loan-amount {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+
+        .interest-rate-note {
+            background: rgba(255, 215, 0, 0.1);
+            border: 1px solid rgba(255, 215, 0, 0.3);
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+            font-size: 0.9rem;
+        }
+
+        .disclaimer {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+            font-size: 0.85rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            margin-top: 40px;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: translate(-50%, -50%) scale(1); }
+            50% { transform: translate(-50%, -50%) scale(1.2); }
+        }
+
+        .timeline-point.animating {
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes flowIn {
+            from { transform: translateY(-20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .cash-flow-item.animating {
+            animation: flowIn 0.5s ease forwards;
+        }
+
+        .arrow {
+            position: absolute;
+            font-size: 2rem;
+            opacity: 0;
+            transition: all 0.5s ease;
+        }
+
+        .arrow.visible {
+            opacity: 1;
+        }
+
+        .arrow.down { color: #ff6b6b; }
+        .arrow.up { color: #00ff88; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📈 Futures Arbitrage Strategy</h1>
+            <p class="subtitle">Interactive visualization of cash-and-carry arbitrage with dividends</p>
+            <a href="index.html" class="nav-button">← Back to Options Simulator</a>
+            <a href="strategies.html" class="nav-button">Bull Spread</a>
+            <a href="straddle.html" class="nav-button" style="background:linear-gradient(135deg, #ff9800 0%, #f57c00 100%);">📊 Straddles</a>
+        </header>
+
+        <!-- Fair Price Formula -->
+        <div class="formula-box">
+            <div class="formula-label">Fair Futures Price Formula</div>
+            <div class="formula">F = (S − PV(D<sub>t</sub>)) × (1 + r(0,T))</div>
+            <div class="formula-label" style="margin-top: 10px;">Where PV(D<sub>t</sub>) = D<sub>t</sub> / (1 + r(0,t))</div>
+        </div>
+
+        <!-- Input Controls -->
+        <div class="controls-panel">
+            <div class="control-group">
+                <label>Stock Price (S)</label>
+                <input type="number" id="stockPrice" value="100" min="1" step="1">
+                <span class="value-display" id="stockPriceDisplay">$100.00</span>
+            </div>
+            <div class="control-group">
+                <label>Dividend (D<sub>t</sub>)</label>
+                <input type="number" id="dividend" value="5" min="0" step="0.5">
+                <span class="value-display" id="dividendDisplay">$5.00</span>
+            </div>
+            <div class="control-group">
+                <label>Time to Dividend (t) - months</label>
+                <input type="number" id="timeToDividend" value="3" min="1" max="11" step="1">
+                <span class="value-display" id="timeToDividendDisplay">3 months</span>
+            </div>
+            <div class="control-group">
+                <label>Time to Maturity (T) - months</label>
+                <input type="number" id="timeToMaturity" value="6" min="2" max="24" step="1">
+                <span class="value-display" id="timeToMaturityDisplay">6 months</span>
+            </div>
+            <div class="control-group">
+                <label>Annual Risk-Free Rate (r)</label>
+                <input type="number" id="riskFreeRate" value="5" min="0" max="20" step="0.5">
+                <span class="value-display" id="riskFreeRateDisplay">5.00%</span>
+            </div>
+            <div class="control-group">
+                <label>Quoted Futures Price (F<sub>q</sub>)</label>
+                <input type="number" id="quotedFutures" value="100" min="1" step="1">
+                <span class="value-display" id="quotedFuturesDisplay">$100.00</span>
+            </div>
+        </div>
+
+        <!-- Interest Rate Note -->
+        <div class="interest-rate-note">
+            <strong>📝 Note on r(0,T):</strong> If the annual rate is <em>r</em> and time to maturity is <em>T</em> years, then r(0,T) = r × T for simple interest. 
+            For example, with r = 5% annual and T = 0.5 years: r(0,T) = 0.05 × 0.5 = 0.025 (2.5%)
+        </div>
+
+        <!-- Arbitrage Condition Check -->
+        <div class="arbitrage-condition" id="arbitrageCondition">
+            <div class="condition-status" id="conditionStatus">Checking arbitrage condition...</div>
+            <div id="conditionDetails"></div>
+        </div>
+
+        <!-- Animation Controls -->
+        <div class="animation-controls">
+            <button class="anim-btn play-btn" id="playBtn">▶ Play Animation</button>
+            <button class="anim-btn reset-btn" id="resetBtn">↺ Reset</button>
+        </div>
+
+        <!-- Strategy Steps -->
+        <div class="strategy-steps">
+            <h2 style="margin-bottom: 20px; color: #00d9ff;">📋 Arbitrage Strategy Steps</h2>
+            
+            <div class="step" id="step1">
+                <div class="step-number">1</div>
+                <div class="step-content">
+                    <h3>Sell Futures Contract</h3>
+                    <p>Sell the overpriced futures at F<sub>q</sub> = <span id="step1Fq">$100</span></p>
+                </div>
+            </div>
+
+            <div class="step" id="step2">
+                <div class="step-number">2</div>
+                <div class="step-content">
+                    <h3>Buy the Stock</h3>
+                    <p>Purchase stock at current price S = <span id="step2S">$100</span></p>
+                </div>
+            </div>
+
+            <div class="step" id="step3">
+                <div class="step-number">3</div>
+                <div class="step-content">
+                    <h3>Finance with Two Loans</h3>
+                    <p>Loan 1: Borrow PV(D<sub>t</sub>) = <span id="step3Loan1">$4.94</span> at rate r(0,t)</p>
+                    <p>Loan 2: Borrow (S − PV(D<sub>t</sub>)) = <span id="step3Loan2">$95.06</span> at rate r(0,T)</p>
+                </div>
+            </div>
+
+            <div class="step" id="step4">
+                <div class="step-number">4</div>
+                <div class="step-content">
+                    <h3>At Dividend Date (t)</h3>
+                    <p>Receive dividend D<sub>t</sub> = <span id="step4Div">$5.00</span>, use to repay Loan 1</p>
+                </div>
+            </div>
+
+            <div class="step" id="step5">
+                <div class="step-number">5</div>
+                <div class="step-content">
+                    <h3>At Maturity (T)</h3>
+                    <p>Deliver stock, receive F<sub>q</sub>, repay Loan 2, keep profit!</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loan Visualization -->
+        <div class="loan-visual">
+            <div class="loan-box loan1" id="loan1Box">
+                <div>📋 Loan 1</div>
+                <div class="loan-amount" id="loan1Amount">$4.94</div>
+                <div>at r(0,t) = <span id="loan1Rate">1.25%</span></div>
+                <div style="margin-top: 10px; font-size: 0.9rem;">Repaid at time t with dividend</div>
+            </div>
+            <div class="loan-box loan2" id="loan2Box">
+                <div>📋 Loan 2</div>
+                <div class="loan-amount" id="loan2Amount">$95.06</div>
+                <div>at r(0,T) = <span id="loan2Rate">2.50%</span></div>
+                <div style="margin-top: 10px; font-size: 0.9rem;">Repaid at maturity T</div>
+            </div>
+            <div class="loan-box stock" id="stockBox">
+                <div>📈 Stock Purchased</div>
+                <div class="loan-amount" id="stockAmount">$100.00</div>
+                <div>Total borrowed = S</div>
+            </div>
+        </div>
+
+        <!-- Timeline -->
+        <div class="timeline-container">
+            <h2 style="margin-bottom: 20px; color: #00d9ff; text-align: center;">📅 Cash Flow Timeline</h2>
+            
+            <div class="timeline">
+                <div class="timeline-line"></div>
+                
+                <div class="timeline-point t0" id="point0"></div>
+                <div class="timeline-label t0">t = 0<br><small>Today</small></div>
+                
+                <div class="timeline-point t" id="pointT"></div>
+                <div class="timeline-label t">t = <span id="tLabel">3</span> mo<br><small>Dividend</small></div>
+                
+                <div class="timeline-point T" id="pointMaturity"></div>
+                <div class="timeline-label T">T = <span id="TLabel">6</span> mo<br><small>Maturity</small></div>
+
+                <!-- Cash Flow Panels -->
+                <div class="cash-flow-panel t0-panel" id="panel0">
+                    <div class="cash-flow-title" style="color: #00d9ff;">📥 At t = 0</div>
+                    <div class="cash-flow-item negative">
+                        <span>Buy Stock:</span>
+                        <span id="cf0Stock">-$100.00</span>
+                    </div>
+                    <div class="cash-flow-item positive">
+                        <span>Loan 1 (PV of Div):</span>
+                        <span id="cf0Loan1">+$4.94</span>
+                    </div>
+                    <div class="cash-flow-item positive">
+                        <span>Loan 2:</span>
+                        <span id="cf0Loan2">+$95.06</span>
+                    </div>
+                    <div class="cash-flow-item" style="border-bottom: none; font-weight: bold;">
+                        <span>Net Cash Flow:</span>
+                        <span style="color: #888;">$0.00</span>
+                    </div>
+                </div>
+
+                <div class="cash-flow-panel t-panel" id="panelT">
+                    <div class="cash-flow-title" style="color: #ffd700;">📥 At t (Dividend)</div>
+                    <div class="cash-flow-item positive">
+                        <span>Receive Dividend:</span>
+                        <span id="cfTDiv">+$5.00</span>
+                    </div>
+                    <div class="cash-flow-item negative">
+                        <span>Repay Loan 1:</span>
+                        <span id="cfTLoan1">-$5.00</span>
+                    </div>
+                    <div class="cash-flow-item" style="border-bottom: none; font-weight: bold;">
+                        <span>Net Cash Flow:</span>
+                        <span style="color: #888;">$0.00</span>
+                    </div>
+                </div>
+
+                <div class="cash-flow-panel T-panel" id="panelMaturity">
+                    <div class="cash-flow-title" style="color: #00ff88;">📥 At T (Maturity)</div>
+                    <div class="cash-flow-item positive">
+                        <span>Futures Settlement:</span>
+                        <span id="cfMatFutures">+$100.00</span>
+                    </div>
+                    <div class="cash-flow-item negative">
+                        <span>Repay Loan 2:</span>
+                        <span id="cfMatLoan2">-$97.44</span>
+                    </div>
+                    <div class="cash-flow-item positive" style="border-bottom: none; font-weight: bold; font-size: 1.1rem;">
+                        <span>✨ PROFIT:</span>
+                        <span id="cfMatProfit">+$2.56</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Result Panel -->
+        <div class="result-panel" id="resultPanel">
+            <h2>🎉 Arbitrage Profit</h2>
+            <div class="profit-amount" id="profitAmount">$2.56</div>
+            <p style="margin-top: 15px; color: #aaa;">Risk-free profit locked in at time 0!</p>
+            <div style="margin-top: 20px; font-size: 0.9rem; color: #888;">
+                Profit = F<sub>q</sub> − (S − PV(D<sub>t</sub>)) × (1 + r(0,T))
+            </div>
+        </div>
+
+        <!-- Disclaimer -->
+        <div class="disclaimer">
+            ⚠️ <strong>Disclaimer:</strong> This simulation is for educational purposes only and should not be considered financial advice. 
+            Real-world arbitrage involves transaction costs, execution risk, and other factors not modeled here.
+        </div>
+    </div>
+
+    <script>
+        // DOM Elements
+        const stockPriceInput = document.getElementById('stockPrice');
+        const dividendInput = document.getElementById('dividend');
+        const timeToDividendInput = document.getElementById('timeToDividend');
+        const timeToMaturityInput = document.getElementById('timeToMaturity');
+        const riskFreeRateInput = document.getElementById('riskFreeRate');
+        const quotedFuturesInput = document.getElementById('quotedFutures');
+
+        const playBtn = document.getElementById('playBtn');
+        const resetBtn = document.getElementById('resetBtn');
+
+        let animationStep = 0;
+        let animationInterval = null;
+
+        // Calculate all values
+        function calculate() {
+            const S = parseFloat(stockPriceInput.value) || 100;
+            const Dt = parseFloat(dividendInput.value) || 5;
+            const t = parseFloat(timeToDividendInput.value) / 12; // Convert months to years
+            const T = parseFloat(timeToMaturityInput.value) / 12; // Convert months to years
+            const r = parseFloat(riskFreeRateInput.value) / 100; // Convert percentage to decimal
+            const Fq = parseFloat(quotedFuturesInput.value) || 100;
+
+            // Calculate rates for the periods
+            const r0t = r * t; // Simple interest rate for period 0 to t
+            const r0T = r * T; // Simple interest rate for period 0 to T
+
+            // Present value of dividend
+            const PV_Dt = Dt / (1 + r0t);
+
+            // Fair futures price
+            const F_fair = (S - PV_Dt) * (1 + r0T);
+
+            // Loan amounts
+            const loan1 = PV_Dt;
+            const loan2 = S - PV_Dt;
+
+            // Loan 1 repayment at time t
+            const loan1Repay = loan1 * (1 + r0t); // This equals Dt
+
+            // Loan 2 repayment at maturity T
+            const loan2Repay = loan2 * (1 + r0T);
+
+            // Arbitrage profit
+            const profit = Fq - loan2Repay;
+
+            // Check if arbitrage opportunity exists
+            const hasArbitrage = Fq > F_fair;
+
+            return {
+                S, Dt, t, T, r, Fq,
+                r0t, r0T,
+                PV_Dt, F_fair,
+                loan1, loan2,
+                loan1Repay, loan2Repay,
+                profit, hasArbitrage
+            };
+        }
+
+        // Update all displays
+        function updateDisplays() {
+            const vals = calculate();
+
+            // Update value displays
+            document.getElementById('stockPriceDisplay').textContent = `$${vals.S.toFixed(2)}`;
+            document.getElementById('dividendDisplay').textContent = `$${vals.Dt.toFixed(2)}`;
+            document.getElementById('timeToDividendDisplay').textContent = `${timeToDividendInput.value} months`;
+            document.getElementById('timeToMaturityDisplay').textContent = `${timeToMaturityInput.value} months`;
+            document.getElementById('riskFreeRateDisplay').textContent = `${vals.r * 100}%`;
+            document.getElementById('quotedFuturesDisplay').textContent = `$${vals.Fq.toFixed(2)}`;
+
+            // Update timeline labels
+            document.getElementById('tLabel').textContent = timeToDividendInput.value;
+            document.getElementById('TLabel').textContent = timeToMaturityInput.value;
+
+            // Update arbitrage condition
+            const conditionEl = document.getElementById('arbitrageCondition');
+            const statusEl = document.getElementById('conditionStatus');
+            const detailsEl = document.getElementById('conditionDetails');
+
+            if (vals.hasArbitrage) {
+                conditionEl.className = 'arbitrage-condition opportunity';
+                statusEl.textContent = '✅ ARBITRAGE OPPORTUNITY EXISTS!';
+                statusEl.style.color = '#00ff88';
+            } else {
+                conditionEl.className = 'arbitrage-condition';
+                statusEl.textContent = '❌ No Arbitrage Opportunity';
+                statusEl.style.color = '#ff6b6b';
+            }
+            detailsEl.innerHTML = `
+                Quoted Price: F<sub>q</sub> = $${vals.Fq.toFixed(2)} | 
+                Fair Price: F = $${vals.F_fair.toFixed(2)}<br>
+                <small>Difference: $${(vals.Fq - vals.F_fair).toFixed(2)}</small>
+            `;
+
+            // Update strategy steps
+            document.getElementById('step1Fq').textContent = `$${vals.Fq.toFixed(2)}`;
+            document.getElementById('step2S').textContent = `$${vals.S.toFixed(2)}`;
+            document.getElementById('step3Loan1').textContent = `$${vals.loan1.toFixed(2)}`;
+            document.getElementById('step3Loan2').textContent = `$${vals.loan2.toFixed(2)}`;
+            document.getElementById('step4Div').textContent = `$${vals.Dt.toFixed(2)}`;
+
+            // Update loan boxes
+            document.getElementById('loan1Amount').textContent = `$${vals.loan1.toFixed(2)}`;
+            document.getElementById('loan1Rate').textContent = `${(vals.r0t * 100).toFixed(2)}%`;
+            document.getElementById('loan2Amount').textContent = `$${vals.loan2.toFixed(2)}`;
+            document.getElementById('loan2Rate').textContent = `${(vals.r0T * 100).toFixed(2)}%`;
+            document.getElementById('stockAmount').textContent = `$${vals.S.toFixed(2)}`;
+
+            // Update cash flow panels
+            document.getElementById('cf0Stock').textContent = `-$${vals.S.toFixed(2)}`;
+            document.getElementById('cf0Loan1').textContent = `+$${vals.loan1.toFixed(2)}`;
+            document.getElementById('cf0Loan2').textContent = `+$${vals.loan2.toFixed(2)}`;
+
+            document.getElementById('cfTDiv').textContent = `+$${vals.Dt.toFixed(2)}`;
+            document.getElementById('cfTLoan1').textContent = `-$${vals.loan1Repay.toFixed(2)}`;
+
+            document.getElementById('cfMatFutures').textContent = `+$${vals.Fq.toFixed(2)}`;
+            document.getElementById('cfMatLoan2').textContent = `-$${vals.loan2Repay.toFixed(2)}`;
+            document.getElementById('cfMatProfit').textContent = vals.profit >= 0 ? 
+                `+$${vals.profit.toFixed(2)}` : `-$${Math.abs(vals.profit).toFixed(2)}`;
+
+            // Update result panel
+            const profitEl = document.getElementById('profitAmount');
+            profitEl.textContent = vals.profit >= 0 ? `$${vals.profit.toFixed(2)}` : `-$${Math.abs(vals.profit).toFixed(2)}`;
+            profitEl.style.color = vals.profit >= 0 ? '#00ff88' : '#ff6b6b';
+        }
+
+        // Reset animation
+        function resetAnimation() {
+            animationStep = 0;
+            if (animationInterval) {
+                clearInterval(animationInterval);
+                animationInterval = null;
+            }
+
+            // Reset all elements
+            document.querySelectorAll('.step').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.loan-box').forEach(el => el.classList.remove('visible'));
+            document.querySelectorAll('.cash-flow-panel').forEach(el => el.classList.remove('visible'));
+            document.querySelectorAll('.timeline-point').forEach(el => {
+                el.classList.remove('active', 'animating');
+            });
+            document.getElementById('resultPanel').classList.remove('visible');
+
+            playBtn.textContent = '▶ Play Animation';
+        }
+
+        // Play animation
+        function playAnimation() {
+            if (animationInterval) {
+                // Pause
+                clearInterval(animationInterval);
+                animationInterval = null;
+                playBtn.textContent = '▶ Continue';
+                return;
+            }
+
+            playBtn.textContent = '⏸ Pause';
+
+            const steps = [
+                () => {
+                    // Step 1: Sell futures
+                    document.getElementById('step1').classList.add('active');
+                },
+                () => {
+                    // Step 2: Buy stock
+                    document.getElementById('step2').classList.add('active');
+                },
+                () => {
+                    // Step 3: Finance with loans
+                    document.getElementById('step3').classList.add('active');
+                    document.getElementById('loan1Box').classList.add('visible');
+                },
+                () => {
+                    document.getElementById('loan2Box').classList.add('visible');
+                },
+                () => {
+                    document.getElementById('stockBox').classList.add('visible');
+                },
+                () => {
+                    // Show t=0 cash flows
+                    document.getElementById('point0').classList.add('active', 'animating');
+                    document.getElementById('panel0').classList.add('visible');
+                },
+                () => {
+                    document.getElementById('point0').classList.remove('animating');
+                    // Step 4: Dividend date
+                    document.getElementById('step4').classList.add('active');
+                    document.getElementById('pointT').classList.add('active', 'animating');
+                    document.getElementById('panelT').classList.add('visible');
+                },
+                () => {
+                    document.getElementById('pointT').classList.remove('animating');
+                    // Step 5: Maturity
+                    document.getElementById('step5').classList.add('active');
+                    document.getElementById('pointMaturity').classList.add('active', 'animating');
+                    document.getElementById('panelMaturity').classList.add('visible');
+                },
+                () => {
+                    document.getElementById('pointMaturity').classList.remove('animating');
+                    // Show result
+                    document.getElementById('resultPanel').classList.add('visible');
+                    playBtn.textContent = '✓ Complete';
+                    clearInterval(animationInterval);
+                    animationInterval = null;
+                }
+            ];
+
+            animationInterval = setInterval(() => {
+                if (animationStep < steps.length) {
+                    steps[animationStep]();
+                    animationStep++;
+                } else {
+                    clearInterval(animationInterval);
+                    animationInterval = null;
+                }
+            }, 1200);
+        }
+
+        // Event listeners
+        [stockPriceInput, dividendInput, timeToDividendInput, timeToMaturityInput, 
+         riskFreeRateInput, quotedFuturesInput].forEach(input => {
+            input.addEventListener('input', () => {
+                // Ensure t < T
+                if (parseFloat(timeToDividendInput.value) >= parseFloat(timeToMaturityInput.value)) {
+                    timeToMaturityInput.value = parseFloat(timeToDividendInput.value) + 1;
+                }
+                updateDisplays();
+            });
+        });
+
+        playBtn.addEventListener('click', playAnimation);
+        resetBtn.addEventListener('click', resetAnimation);
+
+        // Initialize
+        updateDisplays();
+    </script>
+</body>
+</html>

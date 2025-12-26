@@ -61,6 +61,30 @@
 
     .disclaimer { padding:16px 20px; background:#f8f9fa; border-top:1px solid #eee; font-size:11px; color:#666; text-align:center; line-height:1.5; }
 
+    /* Educational Info Box */
+    .strategy-info { padding:16px 20px; background:#f8fbff; border-bottom:1px solid #e0e8f0; }
+    .strategy-header { display:flex; align-items:center; gap:12px; margin-bottom:10px; }
+    .strategy-title { font-size:16px; font-weight:700; }
+    .strategy-title.bullish { color:#2e7d32; }
+    .strategy-title.bearish { color:#c62828; }
+    .strategy-badge { padding:4px 10px; border-radius:20px; font-size:10px; font-weight:600; text-transform:uppercase; }
+    .badge-bullish { background:#e8f5e9; color:#2e7d32; }
+    .badge-bearish { background:#ffebee; color:#c62828; }
+    .badge-income { background:#fff3e0; color:#e65100; }
+    .badge-risk { background:#fce4ec; color:#c2185b; }
+    .strategy-desc { font-size:13px; color:#555; line-height:1.6; margin-bottom:12px; }
+    .strategy-metrics { display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:12px; }
+    .metric-box { padding:10px 12px; background:white; border-radius:6px; border:1px solid #e0e0e0; }
+    .metric-label { font-size:11px; color:#666; margin-bottom:4px; }
+    .metric-value { font-size:13px; font-weight:600; }
+    .metric-value.profit { color:#2e7d32; }
+    .metric-value.loss { color:#c62828; }
+    .metric-value.neutral { color:#1565c0; }
+    .use-cases { margin-top:12px; padding:12px; background:white; border-radius:6px; border:1px solid #e0e0e0; }
+    .use-cases-title { font-size:12px; font-weight:600; color:#333; margin-bottom:8px; }
+    .use-case-list { display:flex; flex-wrap:wrap; gap:8px; }
+    .use-case-tag { padding:4px 10px; background:#e3f2fd; color:#1565c0; border-radius:20px; font-size:11px; font-weight:500; }
+
     @media (max-width:900px) { .container { width:100%; } .canvas-container { height:420px; } }
   </style>
 </head>
@@ -71,7 +95,11 @@
         <h1>Options Payoff Simulator</h1>
         <div class="subtitle">Interactive visualizer for learning call and put option payoffs.</div>
       </div>
-      <a href="strategies.html" target="_blank" class="nav-btn">📈 Options Strategies →</a>
+      <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+        <a href="strategies.html" target="_blank" class="nav-btn">📈 Bull Spread</a>
+        <a href="straddle.html" target="_blank" class="nav-btn" style="background:#ff9800;">📊 Straddles</a>
+        <a href="arbitrage.html" target="_blank" class="nav-btn" style="background:#9c27b0;">⚡ Arbitrage</a>
+      </div>
     </header>
 
     <div class="controls" aria-label="Controls">      <div class="control option-selector">
@@ -93,20 +121,67 @@
         <div><span class="swatch" style="background:var(--premium-color)"></span> <span id="premiumLabel">Call premium (C)</span></div>
         <div class="fixed-display" style="color:var(--premium-color)" id="premiumDisplay">- $3.00</div>
       </div>
+    </div>
 
-      <div class="control">
-        <div><span class="swatch" style="background:var(--stock-color)"></span> Stock price at maturity S<sub>T</sub></div>
-        <div style="display:flex;justify-content:space-between">
-          <div style="font-size:12px;color:#666">Range: $60 — $150</div>
-          <div id="stockVal" style="font-weight:700;color:var(--stock-color)">$88</div>
+    <!-- Educational Strategy Info -->
+    <div class="strategy-info" id="strategyInfo">
+      <div class="strategy-header">
+        <div class="strategy-title bullish" id="strategyTitle">📈 Long Call</div>
+        <span class="strategy-badge badge-bullish" id="strategyBadge">Bullish</span>
+      </div>
+      <div class="strategy-desc" id="strategyDesc">
+        <strong>Buy a call option</strong> when you expect the stock price to <strong>rise significantly</strong>. 
+        You pay a premium upfront for the right (not obligation) to buy the stock at the strike price. 
+        If the stock rises above K + Premium, you profit. Your maximum loss is limited to the premium paid.
+      </div>
+      <div class="strategy-metrics">
+        <div class="metric-box">
+          <div class="metric-label">💰 Max Profit</div>
+          <div class="metric-value profit" id="metricMaxProfit">Unlimited (as S<sub>T</sub> → ∞)</div>
         </div>
-        <input id="stockSlider" type="range" min="60" max="150" step="1" value="88" style="margin-top:8px" />
-        <div style="font-size:12px;color:#666;margin-top:4px">Initial price S<sub>0</sub> = $80</div>
+        <div class="metric-box">
+          <div class="metric-label">⚠️ Max Loss</div>
+          <div class="metric-value loss" id="metricMaxLoss">Premium paid = $3.00</div>
+        </div>
+        <div class="metric-box">
+          <div class="metric-label">⚖️ Breakeven Point</div>
+          <div class="metric-value neutral" id="metricBreakeven">S<sub>T</sub> = K + C = $83</div>
+        </div>
+        <div class="metric-box">
+          <div class="metric-label">📊 Risk/Reward</div>
+          <div class="metric-value" id="metricRiskReward">Limited risk, unlimited reward</div>
+        </div>
+      </div>
+      <div class="use-cases">
+        <div class="use-cases-title">🎯 When to Use:</div>
+        <div class="use-case-list" id="useCaseList">
+          <span class="use-case-tag">📈 Bullish on stock</span>
+          <span class="use-case-tag">📰 Before positive earnings</span>
+          <span class="use-case-tag">💡 Limited capital</span>
+          <span class="use-case-tag">🛡️ Want limited downside</span>
+        </div>
       </div>
     </div>
 
     <div class="main">
       <div class="chart-column">
+        <!-- Stock Price Slider - Above Chart -->
+        <div class="stock-slider-container" style="padding:12px 16px; background:#f0f7ff; border-bottom:1px solid #e0e8f0;">
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span class="swatch" style="background:var(--stock-color); width:14px; height:14px; border-radius:3px; display:inline-block;"></span>
+              <span style="font-weight:600; color:#333;">Stock Price at Maturity (S<sub>T</sub>)</span>
+            </div>
+            <div id="stockVal" style="font-size:20px; font-weight:700; color:var(--stock-color);">$88</div>
+          </div>
+          <input id="stockSlider" type="range" min="60" max="150" step="1" value="88" style="width:100%; cursor:pointer;" />
+          <div style="display:flex; justify-content:space-between; font-size:11px; color:#666; margin-top:4px;">
+            <span>$60</span>
+            <span>Initial S<sub>0</sub> = $80</span>
+            <span>$150</span>
+          </div>
+        </div>
+
         <div class="canvas-container">
           <canvas id="payoffChart" aria-label="Options payoff chart"></canvas>
         </div>
@@ -497,7 +572,131 @@
 
       ctx.fillStyle = '#666'; ctx.font = '14px Arial'; ctx.textAlign = 'center';
       ctx.fillText('Options Payoff Diagram', Math.round(cssW/2), Math.round(cssH)-8);
-    }    function switchToLongCall() {
+    }
+
+    // Strategy educational content
+    const strategyContent = {
+      longCall: {
+        title: '📈 Long Call',
+        titleClass: 'bullish',
+        badge: 'Bullish',
+        badgeClass: 'badge-bullish',
+        desc: `<strong>Buy a call option</strong> when you expect the stock price to <strong>rise significantly</strong>. 
+               You pay a premium upfront for the right (not obligation) to buy the stock at the strike price. 
+               If the stock rises above K + Premium, you profit. Your maximum loss is limited to the premium paid.`,
+        maxProfit: 'Unlimited (as S<sub>T</sub> → ∞)',
+        maxProfitClass: 'profit',
+        maxLoss: `Premium paid = $${FIXED_CALL_C.toFixed(2)}`,
+        maxLossClass: 'loss',
+        breakeven: `S<sub>T</sub> = K + C = $${FIXED_K + FIXED_CALL_C}`,
+        riskReward: 'Limited risk, unlimited reward',
+        useCases: [
+          { icon: '📈', text: 'Bullish on stock' },
+          { icon: '📰', text: 'Before positive earnings' },
+          { icon: '💡', text: 'Limited capital, want leverage' },
+          { icon: '🛡️', text: 'Want limited downside risk' }
+        ]
+      },
+      longPut: {
+        title: '📉 Long Put',
+        titleClass: 'bearish',
+        badge: 'Bearish',
+        badgeClass: 'badge-bearish',
+        desc: `<strong>Buy a put option</strong> when you expect the stock price to <strong>fall significantly</strong>. 
+               You pay a premium upfront for the right to sell the stock at the strike price. 
+               If the stock falls below K - Premium, you profit. Great for hedging or speculating on downside.`,
+        maxProfit: `K - Premium = $${FIXED_K - FIXED_PUT_C} (if S<sub>T</sub> → 0)`,
+        maxProfitClass: 'profit',
+        maxLoss: `Premium paid = $${FIXED_PUT_C.toFixed(2)}`,
+        maxLossClass: 'loss',
+        breakeven: `S<sub>T</sub> = K - P = $${FIXED_K - FIXED_PUT_C}`,
+        riskReward: 'Limited risk, high reward potential',
+        useCases: [
+          { icon: '📉', text: 'Bearish on stock' },
+          { icon: '🛡️', text: 'Hedge existing long position' },
+          { icon: '📰', text: 'Before negative news expected' },
+          { icon: '💰', text: 'Profit from market crash' }
+        ]
+      },
+      shortCall: {
+        title: '📞 Short Call (Naked Call)',
+        titleClass: 'bearish',
+        badge: 'Neutral/Bearish',
+        badgeClass: 'badge-income',
+        desc: `<strong>Sell a call option</strong> when you expect the stock to <strong>stay flat or decline</strong>. 
+               Unlike buying options where you have <em>rights</em>, when you <strong>sell</strong> a call you take on an <strong>obligation</strong>: 
+               if the buyer exercises, you <em>must</em> sell them the stock at strike price K, regardless of how high the market price has risen.
+               You receive the premium upfront as compensation for this risk.
+               <br><br>
+               <strong>⚠️ Short Call vs Long Put:</strong> Both profit when stock falls, but they are fundamentally different! 
+               A <em>Long Put</em> gives you the <strong>right to sell</strong> stock — you pay premium, have limited risk (premium lost), and can profit significantly if stock crashes. 
+               A <em>Short Call</em> gives someone else the <strong>right to buy from you</strong> — you receive premium, but face <strong>unlimited risk</strong> if stock rises. 
+               Long Put = limited risk, Short Call = unlimited risk!`,
+        maxProfit: `Premium received = $${FIXED_CALL_C.toFixed(2)}`,
+        maxProfitClass: 'profit',
+        maxLoss: 'Unlimited (as S<sub>T</sub> → ∞) ⚠️',
+        maxLossClass: 'loss',
+        breakeven: `S<sub>T</sub> = K + C = $${FIXED_K + FIXED_CALL_C}`,
+        riskReward: 'Limited reward, UNLIMITED risk',
+        useCases: [
+          { icon: '😐', text: 'Neutral to bearish outlook' },
+          { icon: '💵', text: 'Generate income from premiums' },
+          { icon: '📊', text: 'High implied volatility (overpriced options)' },
+          { icon: '⚠️', text: 'Experienced traders only!' }
+        ]
+      },
+      shortPut: {
+        title: '📝 Short Put (Cash-Secured Put)',
+        titleClass: 'bullish',
+        badge: 'Neutral/Bullish',
+        badgeClass: 'badge-income',
+        desc: `<strong>Sell a put option</strong> when you're <strong>willing to buy the stock</strong> at a lower price. 
+               You receive premium upfront but must buy the stock at K if assigned. 
+               Popular income strategy - you either keep the premium OR buy stock at a discount!`,
+        maxProfit: `Premium received = $${FIXED_PUT_C.toFixed(2)}`,
+        maxProfitClass: 'profit',
+        maxLoss: `K - Premium = $${FIXED_K - FIXED_PUT_C} (if S<sub>T</sub> → 0)`,
+        maxLossClass: 'loss',
+        breakeven: `S<sub>T</sub> = K - P = $${FIXED_K - FIXED_PUT_C}`,
+        riskReward: 'Limited reward, substantial risk',
+        useCases: [
+          { icon: '🛒', text: 'Want to buy stock cheaper' },
+          { icon: '💵', text: 'Generate income from premiums' },
+          { icon: '📈', text: 'Bullish but want entry discount' },
+          { icon: '💰', text: 'Have cash to secure the put' }
+        ]
+      }
+    };
+
+    function updateStrategyInfo() {
+      let contentKey;
+      if (isCall && !isShort) contentKey = 'longCall';
+      else if (!isCall && !isShort) contentKey = 'longPut';
+      else if (isCall && isShort) contentKey = 'shortCall';
+      else contentKey = 'shortPut';
+
+      const content = strategyContent[contentKey];
+      
+      document.getElementById('strategyTitle').innerHTML = content.title;
+      document.getElementById('strategyTitle').className = `strategy-title ${content.titleClass}`;
+      document.getElementById('strategyBadge').textContent = content.badge;
+      document.getElementById('strategyBadge').className = `strategy-badge ${content.badgeClass}`;
+      document.getElementById('strategyDesc').innerHTML = content.desc;
+      
+      document.getElementById('metricMaxProfit').innerHTML = content.maxProfit;
+      document.getElementById('metricMaxProfit').className = `metric-value ${content.maxProfitClass}`;
+      document.getElementById('metricMaxLoss').innerHTML = content.maxLoss;
+      document.getElementById('metricMaxLoss').className = `metric-value ${content.maxLossClass}`;
+      document.getElementById('metricBreakeven').innerHTML = content.breakeven;
+      document.getElementById('metricRiskReward').textContent = content.riskReward;
+      
+      const useCaseList = document.getElementById('useCaseList');
+      useCaseList.innerHTML = content.useCases.map(uc => 
+        `<span class="use-case-tag">${uc.icon} ${uc.text}</span>`
+      ).join('');
+    }
+
+    function switchToLongCall() {
       isCall = true;
       isShort = false;
       longCallBtn.classList.add('active');
@@ -505,6 +704,7 @@
       shortCallBtn.classList.remove('active');
       shortPutBtn.classList.remove('active');
       updateLabels();
+      updateStrategyInfo();
       calculateAndDraw();
     }
 
@@ -516,6 +716,7 @@
       shortCallBtn.classList.remove('active');
       shortPutBtn.classList.remove('active');
       updateLabels();
+      updateStrategyInfo();
       calculateAndDraw();
     }
 
@@ -527,6 +728,7 @@
       longPutBtn.classList.remove('active');
       shortPutBtn.classList.remove('active');
       updateLabels();
+      updateStrategyInfo();
       calculateAndDraw();
     }
 
@@ -538,6 +740,7 @@
       longPutBtn.classList.remove('active');
       shortCallBtn.classList.remove('active');
       updateLabels();
+      updateStrategyInfo();
       calculateAndDraw();
     }
 
@@ -545,6 +748,7 @@
     function init(){
       ensureCanvasBitmapSize(canvas);
       updateLabels();
+      updateStrategyInfo();
       calculateAndDraw();
     }
     function ensureCanvasBitmapSize(c){ const dpr=window.devicePixelRatio||1; const rect=c.getBoundingClientRect(); const cssW=Math.round(rect.width)||300; const cssH=Math.round(rect.height)||150; const tW=Math.round(cssW*dpr); const tH=Math.round(cssH*dpr); if(c.width!==tW||c.height!==tH){ c.width=tW; c.height=tH; ctx.setTransform(dpr,0,0,dpr,0,0); } }

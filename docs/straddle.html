@@ -1,0 +1,1054 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Straddle Strategies - Long & Short Straddle</title>
+  <style>
+    :root{
+      --strike-color: #2e7d32;
+      --premium-color: #9c27b0;
+      --stock-color: #2196f3;
+      --canvas-bg: #ffffff;
+      --call-color: #1976d2;
+      --put-color: #d32f2f;
+      --long-color: #4caf50;
+      --short-color: #f44336;
+      --profit-color: #00c853;
+      --loss-color: #ff1744;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #f5f7fa;
+      padding: 18px;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+      color: #111;
+      display:flex;
+      justify-content:center;
+    }
+    .container {
+      width:1200px; max-width:100%;
+      background:#fff; border-radius:10px;
+      box-shadow:0 10px 30px rgba(0,0,0,0.08); overflow:hidden;
+    }
+    header { padding:16px 20px; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; }
+    .header-left { display:flex; flex-direction:column; gap:4px; }
+    h1 { font-size:18px; color:#222; margin-bottom:4px; }
+    .subtitle { color:#666; font-size:13px; }
+    .nav-btn { padding:8px 16px; background:#2196f3; color:white; border:none; border-radius:6px; cursor:pointer; font-weight:600; text-decoration:none; font-size:13px; transition: background 0.2s; }
+    .nav-btn:hover { background:#1976d2; }
+    .nav-links { display: flex; gap: 10px; flex-wrap: wrap; }
+
+    /* Strategy Selector */
+    .strategy-selector { padding:16px 20px; background:#f8f9fa; border-bottom:1px solid #eee; display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
+    .strategy-btn { padding:12px 24px; border:2px solid #ddd; border-radius:8px; background:white; cursor:pointer; font-weight:600; font-size:14px; transition:all 0.2s; display:flex; align-items:center; gap:8px; }
+    .strategy-btn:hover { border-color:#2196f3; }
+    .strategy-btn.active.long { background:linear-gradient(135deg, #4caf50, #81c784); color:white; border-color:#4caf50; }
+    .strategy-btn.active.short { background:linear-gradient(135deg, #f44336, #e57373); color:white; border-color:#f44336; }
+    .strategy-btn .icon { font-size:18px; }
+
+    /* Strategy Info */
+    .strategy-info { padding:20px; background:#fff; border-bottom:1px solid #eee; }
+    .strategy-title { font-size:20px; font-weight:700; margin-bottom:12px; display:flex; align-items:center; gap:10px; }
+    .strategy-title.long { color:#4caf50; }
+    .strategy-title.short { color:#f44336; }
+    .strategy-badge { padding:4px 10px; border-radius:20px; font-size:11px; font-weight:600; text-transform:uppercase; }
+    .badge-bullish { background:#e8f5e9; color:#2e7d32; }
+    .badge-bearish { background:#ffebee; color:#c62828; }
+    .badge-volatility { background:#e3f2fd; color:#1565c0; }
+    .badge-neutral { background:#fff3e0; color:#e65100; }
+
+    .strategy-desc { font-size:14px; color:#555; line-height:1.7; margin-bottom:16px; }
+    .strategy-desc strong { color:#333; }
+
+    /* Components Box */
+    .components-box { display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:16px; margin:16px 0; }
+    .component { padding:16px; border-radius:8px; border:2px solid; }
+    .component.call { border-color:#1976d2; background:#e3f2fd; }
+    .component.put { border-color:#d32f2f; background:#ffebee; }
+    .component-title { font-weight:700; font-size:14px; margin-bottom:8px; display:flex; align-items:center; gap:6px; }
+    .component.call .component-title { color:#1976d2; }
+    .component.put .component-title { color:#d32f2f; }
+    .component-details { font-size:13px; color:#555; }
+    .component-details div { margin:4px 0; }
+
+    /* Key Points */
+    .key-points { display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:16px; margin:20px 0; }
+    .key-point { padding:16px; border-radius:8px; background:#f8f9fa; border-left:4px solid; }
+    .key-point.profit { border-color:#4caf50; }
+    .key-point.loss { border-color:#f44336; }
+    .key-point.breakeven { border-color:#ff9800; }
+    .key-point.when { border-color:#2196f3; }
+    .key-point-title { font-weight:700; font-size:13px; margin-bottom:6px; color:#333; }
+    .key-point-value { font-size:15px; font-weight:600; }
+    .key-point.profit .key-point-value { color:#4caf50; }
+    .key-point.loss .key-point-value { color:#f44336; }
+    .key-point.breakeven .key-point-value { color:#ff9800; }
+    .key-point.when .key-point-value { color:#2196f3; }
+
+    /* Formula Display */
+    .formula-section { background:#f0f4f8; padding:16px; border-radius:8px; margin:16px 0; }
+    .formula-title { font-weight:700; font-size:14px; margin-bottom:12px; color:#333; }
+    .formula-grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap:12px; }
+    .formula-item { background:white; padding:12px; border-radius:6px; border:1px solid #e0e0e0; }
+    .formula-label { font-size:12px; color:#666; margin-bottom:4px; }
+    .formula-expr { font-family: 'Times New Roman', serif; font-size:16px; color:#1976d2; }
+
+    /* Controls */
+    .controls { display:flex; gap:12px; align-items:center; padding:16px 20px; background:#fbfdff; border-bottom:1px solid #eee; flex-wrap:wrap; }
+    .control { display:flex; flex-direction:column; gap:6px; padding:10px 12px; border-radius:8px; border:1px solid #e6eef8; min-width:160px; background:#fff; }
+    .control label { font-size:12px; color:#666; font-weight:600; }
+    .control input[type="range"] { width:100%; cursor:pointer; }
+    .control .value-display { font-size:16px; font-weight:700; color:#1976d2; }
+
+    /* Main Layout */
+    .main { display:grid; grid-template-columns: 1fr 1fr; gap:0; }
+    @media (max-width:900px) { .main { grid-template-columns: 1fr; } }
+
+    /* Chart Section */
+    .chart-section { padding:20px; border-right:1px solid #eee; }
+    .chart-title { font-size:14px; font-weight:700; color:#333; margin-bottom:12px; display:flex; align-items:center; gap:8px; }
+    .canvas-container { height:400px; position:relative; }
+    canvas { border:2px solid #ddd; border-radius:8px; background:#fff; width:100%; height:100%; display:block; }
+
+    /* Results Section */
+    .results-section { padding:20px; background:#fafbfc; }
+    .results-title { font-size:14px; font-weight:700; color:#333; margin-bottom:16px; }
+    .result-card { padding:16px; border-radius:8px; margin-bottom:12px; }
+    .result-card.profit { background:#e8f5e9; border:1px solid #a5d6a7; }
+    .result-card.loss { background:#ffebee; border:1px solid #ef9a9a; }
+    .result-card.neutral { background:#fff3e0; border:1px solid #ffcc80; }
+    .result-label { font-size:12px; color:#666; margin-bottom:4px; }
+    .result-value { font-size:24px; font-weight:700; }
+    .result-card.profit .result-value { color:#2e7d32; }
+    .result-card.loss .result-value { color:#c62828; }
+    .result-card.neutral .result-value { color:#e65100; }
+
+    .breakdown { margin-top:20px; }
+    .breakdown-title { font-size:13px; font-weight:600; color:#333; margin-bottom:12px; }
+    .breakdown-item { display:flex; justify-content:space-between; padding:10px 12px; background:white; border-radius:6px; margin-bottom:8px; border:1px solid #eee; }
+    .breakdown-item.call { border-left:3px solid #1976d2; }
+    .breakdown-item.put { border-left:3px solid #d32f2f; }
+    .breakdown-label { font-size:13px; color:#555; }
+    .breakdown-value { font-size:13px; font-weight:700; }
+    .breakdown-value.positive { color:#4caf50; }
+    .breakdown-value.negative { color:#f44336; }
+
+    /* Zone Indicator */
+    .zone-indicator { margin-top:16px; padding:12px; border-radius:8px; text-align:center; }
+    .zone-indicator.profit-zone { background:#e8f5e9; border:2px solid #4caf50; }
+    .zone-indicator.loss-zone { background:#ffebee; border:2px solid #f44336; }
+    .zone-indicator.max-profit { background:#c8e6c9; border:2px solid #2e7d32; }
+    .zone-indicator.max-loss { background:#ffcdd2; border:2px solid #c62828; }
+    .zone-label { font-size:12px; color:#666; }
+    .zone-status { font-size:16px; font-weight:700; margin-top:4px; }
+
+    /* Legend */
+    .legend { padding:12px 20px; display:flex; gap:20px; align-items:center; justify-content:center; border-top:1px solid #eee; background:#fff; flex-wrap:wrap; }
+    .legend-item { display:flex; align-items:center; gap:6px; font-size:12px; color:#555; }
+    .legend-color { width:20px; height:4px; border-radius:2px; }
+
+    /* Use Cases */
+    .use-cases { padding:20px; background:#f8f9fa; border-top:1px solid #eee; }
+    .use-cases-title { font-size:16px; font-weight:700; color:#333; margin-bottom:16px; }
+    .use-case-grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap:16px; }
+    .use-case { padding:16px; background:white; border-radius:8px; border:1px solid #e0e0e0; }
+    .use-case-icon { font-size:24px; margin-bottom:8px; }
+    .use-case-heading { font-weight:700; font-size:14px; color:#333; margin-bottom:6px; }
+    .use-case-desc { font-size:13px; color:#666; line-height:1.5; }
+
+    /* Real World Example */
+    .real-world { padding:20px; background:#fff3e0; border-top:1px solid #ffcc80; }
+    .real-world-title { font-size:14px; font-weight:700; color:#e65100; margin-bottom:12px; display:flex; align-items:center; gap:8px; }
+    .real-world-content { font-size:13px; color:#555; line-height:1.6; }
+    .real-world-content strong { color:#e65100; }
+
+    /* Disclaimer */
+    .disclaimer { padding:16px 20px; background:#f8f9fa; border-top:1px solid #eee; font-size:11px; color:#666; text-align:center; line-height:1.5; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="header-left">
+        <h1>📊 Straddle Strategies Simulator</h1>
+        <div class="subtitle">Learn Long & Short Straddle options strategies with interactive diagrams</div>
+      </div>
+      <div class="nav-links">
+        <a href="index.html" class="nav-btn">← Basic Options</a>
+        <a href="strategies.html" class="nav-btn">Bull Spread</a>
+        <a href="arbitrage.html" class="nav-btn" style="background:#9c27b0;">⚡ Arbitrage</a>
+      </div>
+    </header>
+
+    <!-- Strategy Selector -->
+    <div class="strategy-selector">
+      <span style="font-weight:600; color:#666;">Select Strategy:</span>
+      <button id="longStraddleBtn" class="strategy-btn active long">
+        <span class="icon">📈</span> Long Straddle
+      </button>
+      <button id="shortStraddleBtn" class="strategy-btn short">
+        <span class="icon">📉</span> Short Straddle
+      </button>
+    </div>
+
+    <!-- Strategy Info - Long Straddle -->
+    <div id="longStraddleInfo" class="strategy-info">
+      <div class="strategy-title long">
+        📈 Long Straddle Strategy
+        <span class="strategy-badge badge-volatility">Volatility Bet</span>
+      </div>
+      <div class="strategy-desc">
+        A <strong>Long Straddle</strong> involves <strong>buying a call</strong> AND <strong>buying a put</strong> at the <strong>same strike price (K)</strong> and expiration. 
+        This strategy profits when the stock makes a <strong>large move in either direction</strong>. You're essentially betting on <strong>high volatility</strong> — 
+        you don't care which way the stock moves, as long as it moves significantly!
+        <br><br>
+        <strong>Cost:</strong> You pay both premiums upfront (C₀ + P₀), making this an expensive strategy. The stock must move enough to cover this cost for you to profit.
+      </div>
+
+      <div class="components-box">
+        <div class="component call">
+          <div class="component-title">📞 Long Call</div>
+          <div class="component-details">
+            <div><strong>Action:</strong> Buy Call</div>
+            <div><strong>Strike:</strong> K = $<span id="longCallStrike">100</span></div>
+            <div><strong>Premium Paid:</strong> C₀ = $<span id="longCallPremium">5</span></div>
+          </div>
+        </div>
+        <div class="component put">
+          <div class="component-title">📉 Long Put</div>
+          <div class="component-details">
+            <div><strong>Action:</strong> Buy Put</div>
+            <div><strong>Strike:</strong> K = $<span id="longPutStrike">100</span></div>
+            <div><strong>Premium Paid:</strong> P₀ = $<span id="longPutPremium">3</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="key-points">
+        <div class="key-point profit">
+          <div class="key-point-title">💰 Maximum Profit</div>
+          <div class="key-point-value">Unlimited (upside) / K - Premium (downside)</div>
+        </div>
+        <div class="key-point loss">
+          <div class="key-point-title">⚠️ Maximum Loss</div>
+          <div class="key-point-value">Total Premium Paid = $<span id="longMaxLoss">8</span></div>
+        </div>
+        <div class="key-point breakeven">
+          <div class="key-point-title">⚖️ Breakeven Points</div>
+          <div class="key-point-value">S<sub>T</sub> = $<span id="longBE1">92</span> or S<sub>T</sub> = $<span id="longBE2">108</span></div>
+        </div>
+        <div class="key-point when">
+          <div class="key-point-title">🎯 When to Use</div>
+          <div class="key-point-value">Expecting HIGH volatility, unsure of direction</div>
+        </div>
+      </div>
+
+      <div class="formula-section">
+        <div class="formula-title">📐 Profit Formulas</div>
+        <div class="formula-grid">
+          <div class="formula-item">
+            <div class="formula-label">If S<sub>T</sub> > K (stock rises):</div>
+            <div class="formula-expr">Profit = (S<sub>T</sub> − K) − (C₀ + P₀)</div>
+          </div>
+          <div class="formula-item">
+            <div class="formula-label">If S<sub>T</sub> < K (stock falls):</div>
+            <div class="formula-expr">Profit = (K − S<sub>T</sub>) − (C₀ + P₀)</div>
+          </div>
+          <div class="formula-item">
+            <div class="formula-label">Lower Breakeven:</div>
+            <div class="formula-expr">S<sub>BE</sub> = K − (C₀ + P₀)</div>
+          </div>
+          <div class="formula-item">
+            <div class="formula-label">Upper Breakeven:</div>
+            <div class="formula-expr">S<sub>BE</sub> = K + (C₀ + P₀)</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Strategy Info - Short Straddle -->
+    <div id="shortStraddleInfo" class="strategy-info" style="display:none;">
+      <div class="strategy-title short">
+        📉 Short Straddle Strategy
+        <span class="strategy-badge badge-neutral">Neutral / Low Volatility</span>
+      </div>
+      <div class="strategy-desc">
+        A <strong>Short Straddle</strong> involves <strong>selling a call</strong> AND <strong>selling a put</strong> at the <strong>same strike price (K)</strong> and expiration. 
+        This strategy profits when the stock stays <strong>near the strike price</strong> and doesn't move much. You're betting on <strong>low volatility</strong> — 
+        you collect premiums upfront and hope the options expire worthless or near-worthless.
+        <br><br>
+        <strong>⚠️ Warning:</strong> This is a <strong>high-risk strategy</strong> with <strong>unlimited loss potential</strong> if the stock makes a large move in either direction!
+      </div>
+
+      <div class="components-box">
+        <div class="component call">
+          <div class="component-title">📞 Short Call</div>
+          <div class="component-details">
+            <div><strong>Action:</strong> Sell Call</div>
+            <div><strong>Strike:</strong> K = $<span id="shortCallStrike">100</span></div>
+            <div><strong>Premium Received:</strong> C₀ = $<span id="shortCallPremium">5</span></div>
+          </div>
+        </div>
+        <div class="component put">
+          <div class="component-title">📉 Short Put</div>
+          <div class="component-details">
+            <div><strong>Action:</strong> Sell Put</div>
+            <div><strong>Strike:</strong> K = $<span id="shortPutStrike">100</span></div>
+            <div><strong>Premium Received:</strong> P₀ = $<span id="shortPutPremium">3</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="key-points">
+        <div class="key-point profit">
+          <div class="key-point-title">💰 Maximum Profit</div>
+          <div class="key-point-value">Total Premium Received = $<span id="shortMaxProfit">8</span></div>
+        </div>
+        <div class="key-point loss">
+          <div class="key-point-title">⚠️ Maximum Loss</div>
+          <div class="key-point-value">Unlimited (upside) / K - Premium (downside)</div>
+        </div>
+        <div class="key-point breakeven">
+          <div class="key-point-title">⚖️ Breakeven Points</div>
+          <div class="key-point-value">S<sub>T</sub> = $<span id="shortBE1">92</span> or S<sub>T</sub> = $<span id="shortBE2">108</span></div>
+        </div>
+        <div class="key-point when">
+          <div class="key-point-title">🎯 When to Use</div>
+          <div class="key-point-value">Expecting LOW volatility, stock stays near K</div>
+        </div>
+      </div>
+
+      <div class="formula-section">
+        <div class="formula-title">📐 Profit Formulas</div>
+        <div class="formula-grid">
+          <div class="formula-item">
+            <div class="formula-label">If S<sub>T</sub> > K (stock rises):</div>
+            <div class="formula-expr">Profit = (C₀ + P₀) − (S<sub>T</sub> − K)</div>
+          </div>
+          <div class="formula-item">
+            <div class="formula-label">If S<sub>T</sub> < K (stock falls):</div>
+            <div class="formula-expr">Profit = (C₀ + P₀) − (K − S<sub>T</sub>)</div>
+          </div>
+          <div class="formula-item">
+            <div class="formula-label">Lower Breakeven:</div>
+            <div class="formula-expr">S<sub>BE</sub> = K − (C₀ + P₀)</div>
+          </div>
+          <div class="formula-item">
+            <div class="formula-label">Upper Breakeven:</div>
+            <div class="formula-expr">S<sub>BE</sub> = K + (C₀ + P₀)</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Controls -->
+    <div class="controls">
+      <div class="control">
+        <label>Stock Price at Expiration (S<sub>T</sub>)</label>
+        <input type="range" id="stockPriceSlider" min="60" max="140" value="100" step="1">
+        <div class="value-display">$<span id="stockPriceDisplay">100</span></div>
+      </div>
+      <div class="control">
+        <label>Strike Price (K)</label>
+        <input type="range" id="strikeSlider" min="80" max="120" value="100" step="5">
+        <div class="value-display">$<span id="strikeDisplay">100</span></div>
+      </div>
+      <div class="control">
+        <label>Call Premium (C₀)</label>
+        <input type="range" id="callPremiumSlider" min="1" max="15" value="5" step="0.5">
+        <div class="value-display">$<span id="callPremiumDisplay">5.00</span></div>
+      </div>
+      <div class="control">
+        <label>Put Premium (P₀)</label>
+        <input type="range" id="putPremiumSlider" min="1" max="15" value="3" step="0.5">
+        <div class="value-display">$<span id="putPremiumDisplay">3.00</span></div>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main">
+      <!-- Chart Section -->
+      <div class="chart-section">
+        <div class="chart-title">📊 Payoff Diagram</div>
+        <div class="canvas-container">
+          <canvas id="payoffChart"></canvas>
+        </div>
+      </div>
+
+      <!-- Results Section -->
+      <div class="results-section">
+        <div class="results-title">📈 Current Position Analysis</div>
+        
+        <div id="profitCard" class="result-card profit">
+          <div class="result-label">Net Profit/Loss at S<sub>T</sub> = $<span id="resultST">100</span></div>
+          <div class="result-value" id="netProfitDisplay">$0.00</div>
+        </div>
+
+        <div class="breakdown">
+          <div class="breakdown-title">Component Breakdown:</div>
+          <div class="breakdown-item call">
+            <span class="breakdown-label" id="callActionLabel">Long Call Payoff:</span>
+            <span class="breakdown-value" id="callPayoffDisplay">$0.00</span>
+          </div>
+          <div class="breakdown-item put">
+            <span class="breakdown-label" id="putActionLabel">Long Put Payoff:</span>
+            <span class="breakdown-value" id="putPayoffDisplay">$0.00</span>
+          </div>
+          <div class="breakdown-item" style="border-left:3px solid #9c27b0;">
+            <span class="breakdown-label" id="premiumLabel">Total Premium Paid:</span>
+            <span class="breakdown-value negative" id="premiumDisplay">-$8.00</span>
+          </div>
+        </div>
+
+        <div id="zoneIndicator" class="zone-indicator profit-zone">
+          <div class="zone-label">Current Zone</div>
+          <div class="zone-status" id="zoneStatus">AT THE MONEY</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Legend -->
+    <div class="legend">
+      <div class="legend-item">
+        <div class="legend-color" id="straddleLegendColor" style="background:#4caf50;"></div>
+        <span id="straddleLegendLabel">Long Straddle Payoff</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-color" style="background:#1976d2;"></div>
+        <span>Call Component</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-color" style="background:#d32f2f;"></div>
+        <span>Put Component</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-color" style="background:#ff9800; height:2px; border-top:2px dashed #ff9800;"></div>
+        <span>Breakeven Points</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-color" style="background:#2e7d32;"></div>
+        <span>Strike Price (K)</span>
+      </div>
+    </div>
+
+    <!-- Use Cases -->
+    <div class="use-cases">
+      <div class="use-cases-title" id="useCasesTitle">🎯 When to Use Long Straddle</div>
+      <div class="use-case-grid" id="useCaseGrid">
+        <div class="use-case">
+          <div class="use-case-icon">📰</div>
+          <div class="use-case-heading">Before Earnings Announcements</div>
+          <div class="use-case-desc">Companies often have big stock moves after earnings. A long straddle profits whether the news is good or bad!</div>
+        </div>
+        <div class="use-case">
+          <div class="use-case-icon">⚖️</div>
+          <div class="use-case-heading">FDA Drug Approvals</div>
+          <div class="use-case-desc">Biotech stocks can soar or crash based on FDA decisions. Perfect for straddles when you expect a binary outcome.</div>
+        </div>
+        <div class="use-case">
+          <div class="use-case-icon">🏛️</div>
+          <div class="use-case-heading">Major Economic Events</div>
+          <div class="use-case-desc">Federal Reserve announcements, elections, or geopolitical events can cause significant market volatility.</div>
+        </div>
+        <div class="use-case">
+          <div class="use-case-icon">📊</div>
+          <div class="use-case-heading">Low Implied Volatility</div>
+          <div class="use-case-desc">When options are "cheap" (low IV) but you expect a big move, long straddles can be particularly profitable.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Real World Example -->
+    <div class="real-world" id="realWorldSection">
+      <div class="real-world-title">⚠️ Real World Cautionary Tale: Nick Leeson & Barings Bank</div>
+      <div class="real-world-content">
+        <strong>Nick Leeson</strong>, a trader at Barings Bank, sold thousands of short straddles on the Nikkei-225 index, 
+        betting that the Japanese market would remain stable. He initially received premiums of C₀ + P₀ = 8 (per contract).
+        <br><br>
+        However, the <strong>1995 Kobe earthquake</strong> caused the Nikkei-225 to plummet dramatically. Since short straddles 
+        have <strong>unlimited downside risk</strong>, Leeson's losses spiraled out of control, eventually reaching 
+        <strong>£827 million</strong> — enough to bankrupt Barings Bank, one of the oldest merchant banks in the UK!
+        <br><br>
+        <strong>Lesson:</strong> Short straddles can generate steady income in calm markets, but catastrophic losses during unexpected events. 
+        Always understand your maximum risk exposure!
+      </div>
+    </div>
+
+    <!-- Disclaimer -->
+    <div class="disclaimer">
+      ⚠️ <strong>Disclaimer:</strong> This simulator is for educational purposes only. Options trading involves significant risk and is not suitable for all investors. 
+      Past performance does not guarantee future results. Consult a financial advisor before making investment decisions.
+    </div>
+  </div>
+
+  <script>
+    // State
+    let isLongStraddle = true;
+
+    // DOM Elements
+    const canvas = document.getElementById('payoffChart');
+    const ctx = canvas.getContext('2d');
+
+    const stockPriceSlider = document.getElementById('stockPriceSlider');
+    const strikeSlider = document.getElementById('strikeSlider');
+    const callPremiumSlider = document.getElementById('callPremiumSlider');
+    const putPremiumSlider = document.getElementById('putPremiumSlider');
+
+    const longStraddleBtn = document.getElementById('longStraddleBtn');
+    const shortStraddleBtn = document.getElementById('shortStraddleBtn');
+
+    // High DPI Canvas Setup
+    function setupCanvas() {
+      const dpr = window.devicePixelRatio || 1;
+      const rect = canvas.getBoundingClientRect();
+      canvas.width = rect.width * dpr;
+      canvas.height = rect.height * dpr;
+      ctx.scale(dpr, dpr);
+      canvas.style.width = rect.width + 'px';
+      canvas.style.height = rect.height + 'px';
+    }
+
+    // Calculate payoffs
+    function calculatePayoffs(ST, K, C, P) {
+      // Long Call payoff
+      const callPayoff = Math.max(0, ST - K) - C;
+      // Long Put payoff
+      const putPayoff = Math.max(0, K - ST) - P;
+      // Total straddle payoff (long)
+      const longStraddlePayoff = callPayoff + putPayoff + C + P; // Intrinsic only for breakdown
+      const longStraddleProfit = callPayoff + putPayoff;
+      
+      // Short straddle is opposite
+      const shortStraddleProfit = -longStraddleProfit;
+
+      return {
+        callPayoff,
+        putPayoff,
+        callIntrinsic: Math.max(0, ST - K),
+        putIntrinsic: Math.max(0, K - ST),
+        longStraddleProfit,
+        shortStraddleProfit,
+        totalPremium: C + P
+      };
+    }
+
+    // Draw chart
+    function draw() {
+      const ST = parseFloat(stockPriceSlider.value);
+      const K = parseFloat(strikeSlider.value);
+      const C = parseFloat(callPremiumSlider.value);
+      const P = parseFloat(putPremiumSlider.value);
+      const totalPremium = C + P;
+
+      const rect = canvas.getBoundingClientRect();
+      const W = rect.width;
+      const H = rect.height;
+
+      ctx.clearRect(0, 0, W, H);
+
+      // Chart dimensions
+      const padding = { top: 40, right: 40, bottom: 50, left: 60 };
+      const chartW = W - padding.left - padding.right;
+      const chartH = H - padding.top - padding.bottom;
+
+      // Price range
+      const minPrice = 60;
+      const maxPrice = 140;
+
+      // Profit range (dynamic based on premium)
+      const maxProfit = Math.max(40, totalPremium + 30);
+      const minProfit = -maxProfit;
+
+      // Scale functions
+      const scaleX = (price) => padding.left + ((price - minPrice) / (maxPrice - minPrice)) * chartW;
+      const scaleY = (profit) => padding.top + ((maxProfit - profit) / (maxProfit - minProfit)) * chartH;
+
+      // Draw grid
+      ctx.strokeStyle = '#e0e0e0';
+      ctx.lineWidth = 1;
+      
+      // Horizontal grid lines
+      for (let p = minProfit; p <= maxProfit; p += 10) {
+        const y = scaleY(p);
+        ctx.beginPath();
+        ctx.moveTo(padding.left, y);
+        ctx.lineTo(W - padding.right, y);
+        ctx.stroke();
+      }
+
+      // Vertical grid lines
+      for (let price = minPrice; price <= maxPrice; price += 10) {
+        const x = scaleX(price);
+        ctx.beginPath();
+        ctx.moveTo(x, padding.top);
+        ctx.lineTo(x, H - padding.bottom);
+        ctx.stroke();
+      }
+
+      // Zero line (thicker)
+      ctx.strokeStyle = '#333';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(padding.left, scaleY(0));
+      ctx.lineTo(W - padding.right, scaleY(0));
+      ctx.stroke();
+
+      // Draw call component (dashed)
+      ctx.strokeStyle = '#1976d2';
+      ctx.lineWidth = 2;
+      ctx.setLineDash([5, 5]);
+      ctx.beginPath();
+      for (let price = minPrice; price <= maxPrice; price++) {
+        const payoff = isLongStraddle ? 
+          Math.max(0, price - K) - C :
+          C - Math.max(0, price - K);
+        const x = scaleX(price);
+        const y = scaleY(payoff);
+        if (price === minPrice) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // Draw put component (dashed)
+      ctx.strokeStyle = '#d32f2f';
+      ctx.lineWidth = 2;
+      ctx.setLineDash([5, 5]);
+      ctx.beginPath();
+      for (let price = minPrice; price <= maxPrice; price++) {
+        const payoff = isLongStraddle ? 
+          Math.max(0, K - price) - P :
+          P - Math.max(0, K - price);
+        const x = scaleX(price);
+        const y = scaleY(payoff);
+        if (price === minPrice) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // Draw straddle payoff (solid, thick)
+      ctx.strokeStyle = isLongStraddle ? '#4caf50' : '#f44336';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      for (let price = minPrice; price <= maxPrice; price++) {
+        const callProfit = Math.max(0, price - K) - C;
+        const putProfit = Math.max(0, K - price) - P;
+        let straddleProfit = callProfit + putProfit;
+        if (!isLongStraddle) straddleProfit = -straddleProfit;
+        
+        const x = scaleX(price);
+        const y = scaleY(straddleProfit);
+        if (price === minPrice) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+
+      // Fill profit/loss regions
+      ctx.globalAlpha = 0.1;
+      
+      // For long straddle: profit when |ST - K| > premium
+      // For short straddle: profit when |ST - K| < premium
+      const be1 = K - totalPremium;
+      const be2 = K + totalPremium;
+
+      if (isLongStraddle) {
+        // Profit regions (outside breakevens)
+        ctx.fillStyle = '#4caf50';
+        ctx.beginPath();
+        ctx.moveTo(scaleX(minPrice), scaleY(0));
+        for (let price = minPrice; price <= be1; price++) {
+          const profit = (K - price) - totalPremium;
+          ctx.lineTo(scaleX(price), scaleY(Math.max(0, profit)));
+        }
+        ctx.lineTo(scaleX(be1), scaleY(0));
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.moveTo(scaleX(be2), scaleY(0));
+        for (let price = be2; price <= maxPrice; price++) {
+          const profit = (price - K) - totalPremium;
+          ctx.lineTo(scaleX(price), scaleY(Math.max(0, profit)));
+        }
+        ctx.lineTo(scaleX(maxPrice), scaleY(0));
+        ctx.closePath();
+        ctx.fill();
+
+        // Loss region (between breakevens)
+        ctx.fillStyle = '#f44336';
+        ctx.beginPath();
+        ctx.moveTo(scaleX(be1), scaleY(0));
+        for (let price = be1; price <= be2; price++) {
+          const callProfit = Math.max(0, price - K) - C;
+          const putProfit = Math.max(0, K - price) - P;
+          const profit = callProfit + putProfit;
+          ctx.lineTo(scaleX(price), scaleY(Math.min(0, profit)));
+        }
+        ctx.lineTo(scaleX(be2), scaleY(0));
+        ctx.closePath();
+        ctx.fill();
+      } else {
+        // Short straddle: profit in the middle, loss on sides
+        ctx.fillStyle = '#4caf50';
+        ctx.beginPath();
+        ctx.moveTo(scaleX(be1), scaleY(0));
+        for (let price = be1; price <= be2; price++) {
+          const callProfit = Math.max(0, price - K) - C;
+          const putProfit = Math.max(0, K - price) - P;
+          const profit = -(callProfit + putProfit);
+          ctx.lineTo(scaleX(price), scaleY(Math.max(0, profit)));
+        }
+        ctx.lineTo(scaleX(be2), scaleY(0));
+        ctx.closePath();
+        ctx.fill();
+
+        // Loss regions
+        ctx.fillStyle = '#f44336';
+        ctx.beginPath();
+        ctx.moveTo(scaleX(minPrice), scaleY(0));
+        for (let price = minPrice; price <= be1; price++) {
+          const profit = totalPremium - (K - price);
+          ctx.lineTo(scaleX(price), scaleY(Math.min(0, profit)));
+        }
+        ctx.lineTo(scaleX(be1), scaleY(0));
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.moveTo(scaleX(be2), scaleY(0));
+        for (let price = be2; price <= maxPrice; price++) {
+          const profit = totalPremium - (price - K);
+          ctx.lineTo(scaleX(price), scaleY(Math.min(0, profit)));
+        }
+        ctx.lineTo(scaleX(maxPrice), scaleY(0));
+        ctx.closePath();
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+
+      // Draw strike price line
+      ctx.strokeStyle = '#2e7d32';
+      ctx.lineWidth = 2;
+      ctx.setLineDash([8, 4]);
+      ctx.beginPath();
+      ctx.moveTo(scaleX(K), padding.top);
+      ctx.lineTo(scaleX(K), H - padding.bottom);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // Draw breakeven lines
+      ctx.strokeStyle = '#ff9800';
+      ctx.lineWidth = 2;
+      ctx.setLineDash([4, 4]);
+      
+      // Lower breakeven
+      ctx.beginPath();
+      ctx.moveTo(scaleX(be1), padding.top);
+      ctx.lineTo(scaleX(be1), H - padding.bottom);
+      ctx.stroke();
+
+      // Upper breakeven
+      ctx.beginPath();
+      ctx.moveTo(scaleX(be2), padding.top);
+      ctx.lineTo(scaleX(be2), H - padding.bottom);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // Draw current stock price marker
+      ctx.strokeStyle = '#2196f3';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(scaleX(ST), padding.top);
+      ctx.lineTo(scaleX(ST), H - padding.bottom);
+      ctx.stroke();
+
+      // Current position dot
+      const payoffs = calculatePayoffs(ST, K, C, P);
+      const currentProfit = isLongStraddle ? payoffs.longStraddleProfit : payoffs.shortStraddleProfit;
+      
+      ctx.fillStyle = currentProfit >= 0 ? '#4caf50' : '#f44336';
+      ctx.beginPath();
+      ctx.arc(scaleX(ST), scaleY(currentProfit), 8, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#fff';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      // Labels
+      ctx.fillStyle = '#333';
+      ctx.font = 'bold 12px system-ui';
+      ctx.textAlign = 'center';
+
+      // X-axis labels
+      for (let price = minPrice; price <= maxPrice; price += 20) {
+        ctx.fillText('$' + price, scaleX(price), H - padding.bottom + 20);
+      }
+      ctx.fillText('Stock Price (Sᴛ)', W / 2, H - 10);
+
+      // Y-axis labels
+      ctx.textAlign = 'right';
+      for (let p = minProfit; p <= maxProfit; p += 10) {
+        if (p !== 0) ctx.fillText('$' + p, padding.left - 10, scaleY(p) + 4);
+      }
+      ctx.save();
+      ctx.translate(15, H / 2);
+      ctx.rotate(-Math.PI / 2);
+      ctx.textAlign = 'center';
+      ctx.fillText('Profit/Loss', 0, 0);
+      ctx.restore();
+
+      // Key point labels
+      ctx.font = 'bold 11px system-ui';
+      ctx.textAlign = 'center';
+      
+      // Strike label
+      ctx.fillStyle = '#2e7d32';
+      ctx.fillText('K=' + K, scaleX(K), padding.top - 10);
+
+      // Breakeven labels
+      ctx.fillStyle = '#ff9800';
+      ctx.fillText('BE=' + be1.toFixed(0), scaleX(be1), padding.top - 10);
+      ctx.fillText('BE=' + be2.toFixed(0), scaleX(be2), padding.top - 10);
+
+      // Current price label
+      ctx.fillStyle = '#2196f3';
+      ctx.fillText('Sᴛ=' + ST, scaleX(ST), H - padding.bottom + 35);
+
+      // Max profit/loss labels
+      if (isLongStraddle) {
+        ctx.fillStyle = '#f44336';
+        ctx.fillText('Max Loss: -$' + totalPremium.toFixed(0), scaleX(K), scaleY(-totalPremium) - 10);
+      } else {
+        ctx.fillStyle = '#4caf50';
+        ctx.fillText('Max Profit: +$' + totalPremium.toFixed(0), scaleX(K), scaleY(totalPremium) - 10);
+      }
+    }
+
+    // Update displays
+    function updateDisplays() {
+      const ST = parseFloat(stockPriceSlider.value);
+      const K = parseFloat(strikeSlider.value);
+      const C = parseFloat(callPremiumSlider.value);
+      const P = parseFloat(putPremiumSlider.value);
+      const totalPremium = C + P;
+
+      // Update slider displays
+      document.getElementById('stockPriceDisplay').textContent = ST;
+      document.getElementById('strikeDisplay').textContent = K;
+      document.getElementById('callPremiumDisplay').textContent = C.toFixed(2);
+      document.getElementById('putPremiumDisplay').textContent = P.toFixed(2);
+
+      // Calculate payoffs
+      const payoffs = calculatePayoffs(ST, K, C, P);
+      const currentProfit = isLongStraddle ? payoffs.longStraddleProfit : payoffs.shortStraddleProfit;
+
+      // Breakeven points
+      const be1 = K - totalPremium;
+      const be2 = K + totalPremium;
+
+      // Update info panels
+      if (isLongStraddle) {
+        document.getElementById('longCallStrike').textContent = K;
+        document.getElementById('longPutStrike').textContent = K;
+        document.getElementById('longCallPremium').textContent = C.toFixed(2);
+        document.getElementById('longPutPremium').textContent = P.toFixed(2);
+        document.getElementById('longMaxLoss').textContent = totalPremium.toFixed(2);
+        document.getElementById('longBE1').textContent = be1.toFixed(0);
+        document.getElementById('longBE2').textContent = be2.toFixed(0);
+      } else {
+        document.getElementById('shortCallStrike').textContent = K;
+        document.getElementById('shortPutStrike').textContent = K;
+        document.getElementById('shortCallPremium').textContent = C.toFixed(2);
+        document.getElementById('shortPutPremium').textContent = P.toFixed(2);
+        document.getElementById('shortMaxProfit').textContent = totalPremium.toFixed(2);
+        document.getElementById('shortBE1').textContent = be1.toFixed(0);
+        document.getElementById('shortBE2').textContent = be2.toFixed(0);
+      }
+
+      // Update results
+      document.getElementById('resultST').textContent = ST;
+      
+      const profitCard = document.getElementById('profitCard');
+      const netProfitDisplay = document.getElementById('netProfitDisplay');
+      
+      if (currentProfit >= 0) {
+        profitCard.className = 'result-card profit';
+        netProfitDisplay.textContent = '+$' + currentProfit.toFixed(2);
+      } else {
+        profitCard.className = 'result-card loss';
+        netProfitDisplay.textContent = '-$' + Math.abs(currentProfit).toFixed(2);
+      }
+
+      // Update breakdown
+      const callLabel = document.getElementById('callActionLabel');
+      const putLabel = document.getElementById('putActionLabel');
+      const premiumLabel = document.getElementById('premiumLabel');
+
+      if (isLongStraddle) {
+        callLabel.textContent = 'Long Call Payoff:';
+        putLabel.textContent = 'Long Put Payoff:';
+        premiumLabel.textContent = 'Total Premium Paid:';
+      } else {
+        callLabel.textContent = 'Short Call Payoff:';
+        putLabel.textContent = 'Short Put Payoff:';
+        premiumLabel.textContent = 'Total Premium Received:';
+      }
+
+      const callPayoffDisplay = document.getElementById('callPayoffDisplay');
+      const putPayoffDisplay = document.getElementById('putPayoffDisplay');
+      const premiumDisplay = document.getElementById('premiumDisplay');
+
+      const callPay = isLongStraddle ? payoffs.callPayoff : -payoffs.callPayoff;
+      const putPay = isLongStraddle ? payoffs.putPayoff : -payoffs.putPayoff;
+
+      callPayoffDisplay.textContent = (callPay >= 0 ? '+' : '') + '$' + callPay.toFixed(2);
+      callPayoffDisplay.className = 'breakdown-value ' + (callPay >= 0 ? 'positive' : 'negative');
+
+      putPayoffDisplay.textContent = (putPay >= 0 ? '+' : '') + '$' + putPay.toFixed(2);
+      putPayoffDisplay.className = 'breakdown-value ' + (putPay >= 0 ? 'positive' : 'negative');
+
+      if (isLongStraddle) {
+        premiumDisplay.textContent = '-$' + totalPremium.toFixed(2);
+        premiumDisplay.className = 'breakdown-value negative';
+      } else {
+        premiumDisplay.textContent = '+$' + totalPremium.toFixed(2);
+        premiumDisplay.className = 'breakdown-value positive';
+      }
+
+      // Update zone indicator
+      const zoneIndicator = document.getElementById('zoneIndicator');
+      const zoneStatus = document.getElementById('zoneStatus');
+
+      if (isLongStraddle) {
+        if (ST < be1 || ST > be2) {
+          zoneIndicator.className = 'zone-indicator profit-zone';
+          zoneStatus.textContent = '✅ PROFIT ZONE';
+          zoneStatus.style.color = '#2e7d32';
+        } else if (ST === K) {
+          zoneIndicator.className = 'zone-indicator max-loss';
+          zoneStatus.textContent = '⚠️ MAX LOSS (At Strike)';
+          zoneStatus.style.color = '#c62828';
+        } else {
+          zoneIndicator.className = 'zone-indicator loss-zone';
+          zoneStatus.textContent = '❌ LOSS ZONE';
+          zoneStatus.style.color = '#c62828';
+        }
+      } else {
+        if (ST > be1 && ST < be2) {
+          if (ST === K) {
+            zoneIndicator.className = 'zone-indicator max-profit';
+            zoneStatus.textContent = '🎉 MAX PROFIT (At Strike)';
+            zoneStatus.style.color = '#2e7d32';
+          } else {
+            zoneIndicator.className = 'zone-indicator profit-zone';
+            zoneStatus.textContent = '✅ PROFIT ZONE';
+            zoneStatus.style.color = '#2e7d32';
+          }
+        } else {
+          zoneIndicator.className = 'zone-indicator loss-zone';
+          zoneStatus.textContent = '❌ LOSS ZONE (Unlimited Risk!)';
+          zoneStatus.style.color = '#c62828';
+        }
+      }
+
+      // Update legend
+      document.getElementById('straddleLegendColor').style.background = isLongStraddle ? '#4caf50' : '#f44336';
+      document.getElementById('straddleLegendLabel').textContent = isLongStraddle ? 'Long Straddle Payoff' : 'Short Straddle Payoff';
+
+      draw();
+    }
+
+    // Switch strategies
+    function switchToLongStraddle() {
+      isLongStraddle = true;
+      longStraddleBtn.classList.add('active');
+      shortStraddleBtn.classList.remove('active');
+      document.getElementById('longStraddleInfo').style.display = 'block';
+      document.getElementById('shortStraddleInfo').style.display = 'none';
+      document.getElementById('realWorldSection').style.display = 'none';
+      
+      // Update use cases
+      document.getElementById('useCasesTitle').textContent = '🎯 When to Use Long Straddle';
+      document.getElementById('useCaseGrid').innerHTML = `
+        <div class="use-case">
+          <div class="use-case-icon">📰</div>
+          <div class="use-case-heading">Before Earnings Announcements</div>
+          <div class="use-case-desc">Companies often have big stock moves after earnings. A long straddle profits whether the news is good or bad!</div>
+        </div>
+        <div class="use-case">
+          <div class="use-case-icon">⚖️</div>
+          <div class="use-case-heading">FDA Drug Approvals</div>
+          <div class="use-case-desc">Biotech stocks can soar or crash based on FDA decisions. Perfect for straddles when you expect a binary outcome.</div>
+        </div>
+        <div class="use-case">
+          <div class="use-case-icon">🏛️</div>
+          <div class="use-case-heading">Major Economic Events</div>
+          <div class="use-case-desc">Federal Reserve announcements, elections, or geopolitical events can cause significant market volatility.</div>
+        </div>
+        <div class="use-case">
+          <div class="use-case-icon">📊</div>
+          <div class="use-case-heading">Low Implied Volatility</div>
+          <div class="use-case-desc">When options are "cheap" (low IV) but you expect a big move, long straddles can be particularly profitable.</div>
+        </div>
+      `;
+
+      updateDisplays();
+    }
+
+    function switchToShortStraddle() {
+      isLongStraddle = false;
+      shortStraddleBtn.classList.add('active');
+      longStraddleBtn.classList.remove('active');
+      document.getElementById('shortStraddleInfo').style.display = 'block';
+      document.getElementById('longStraddleInfo').style.display = 'none';
+      document.getElementById('realWorldSection').style.display = 'block';
+      
+      // Update use cases
+      document.getElementById('useCasesTitle').textContent = '🎯 When to Use Short Straddle';
+      document.getElementById('useCaseGrid').innerHTML = `
+        <div class="use-case">
+          <div class="use-case-icon">😴</div>
+          <div class="use-case-heading">Low Volatility Markets</div>
+          <div class="use-case-desc">When you expect the market to remain calm and range-bound, short straddles generate income from time decay.</div>
+        </div>
+        <div class="use-case">
+          <div class="use-case-icon">📈</div>
+          <div class="use-case-heading">High Implied Volatility</div>
+          <div class="use-case-desc">When options are "expensive" (high IV), selling straddles can be profitable if volatility decreases or the stock stays flat.</div>
+        </div>
+        <div class="use-case">
+          <div class="use-case-icon">⏰</div>
+          <div class="use-case-heading">Time Decay (Theta)</div>
+          <div class="use-case-desc">As expiration approaches, both options lose time value. Short straddle sellers profit from this "theta decay."</div>
+        </div>
+        <div class="use-case">
+          <div class="use-case-icon">⚠️</div>
+          <div class="use-case-heading">Hedged Positions Only</div>
+          <div class="use-case-desc">Due to unlimited risk, short straddles are best used by experienced traders with proper risk management and hedging.</div>
+        </div>
+      `;
+
+      updateDisplays();
+    }
+
+    // Event listeners
+    longStraddleBtn.addEventListener('click', switchToLongStraddle);
+    shortStraddleBtn.addEventListener('click', switchToShortStraddle);
+
+    [stockPriceSlider, strikeSlider, callPremiumSlider, putPremiumSlider].forEach(slider => {
+      slider.addEventListener('input', updateDisplays);
+    });
+
+    window.addEventListener('resize', () => {
+      setupCanvas();
+      draw();
+    });
+
+    // Initialize
+    setupCanvas();
+    updateDisplays();
+  </script>
+</body>
+</html>
